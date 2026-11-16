@@ -99,7 +99,7 @@ BEGIN
   -- Snapshot items, decrement stock, log movements
   FOR v_item IN SELECT * FROM jsonb_array_elements(p->'items') LOOP
     v_qty := (v_item->>'quantity')::int;
-    SELECT pv.sku, pv.colour_name, pv.product_id, coalesce(pr.sale_price, pr.price) AS unit_price, pv.stock
+    SELECT pv.id, pr.name, pv.sku, pv.colour_name, pv.product_id, coalesce(pr.sale_price, pr.price) AS unit_price, pv.stock
       INTO v_variant
       FROM public.product_variants pv
       JOIN public.products pr ON pr.id = pv.product_id

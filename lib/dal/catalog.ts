@@ -78,11 +78,14 @@ export async function listProducts(opts: ListOptions = {}): Promise<{
     if (opts.categorySlug === "new-in") {
       query = query.eq("is_new", true);
     } else {
-      query = query.filter(
-        "id",
-        "in",
-        `(select product_id from product_categories pc join categories c on c.id = pc.category_id where c.slug = '${opts.categorySlug.replace(/'/g, "''")}')`,
-      );
+      // Two-step fetch: PostgREST "in" needs literal UUID lists
+      const { data: links } = await supabase
+        .from("product_categories")
+        .select("product_id, categories!inner(slug)")
+        .eq("categories.slug", opts.categorySlug);
+      const ids = (links ?? []).map((l: { product_id: string }) => l.product_id);
+      if (ids.length === 0) return { items: [], total: 0, facets: { colours: [], materials: [], priceMin: 0, priceMax: 0 } };
+      query = query.in("id", ids);
     }
   }
 
