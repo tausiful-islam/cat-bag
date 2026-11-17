@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Heart, Menu, Search, ShoppingBag, User } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useBag } from "./bag-context";
+import { AuthControls } from "./auth-controls";
 import { useWishlist } from "./wishlist-context";
 
 export interface NavCategory {
@@ -13,7 +14,7 @@ export interface NavCategory {
   name: string;
 }
 
-export function HeaderIcons() {
+export function HeaderIcons({ clerkConfigured = false }: { clerkConfigured?: boolean }) {
   const { count, ready } = useBag();
   const wishlist = useWishlist();
   return (
@@ -35,6 +36,9 @@ export function HeaderIcons() {
           <span className="absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full bg-[var(--gold)]" />
         )}
       </Link>
+      <span className="hidden sm:block">
+        <AuthControls configured={clerkConfigured} />
+      </span>
       <Link
         href="/account"
         aria-label="Account"

@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
+import { shadcn } from "@clerk/ui/themes";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -42,12 +44,21 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Guard: render ClerkProvider only when keys are present so builds
+  // and preview environments without Clerk stay healthy. Production
+  // always sets the keys.
+  const clerkReady = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+
+  const body = (
+    <body className={`${cormorant.variable} ${dmSans.variable} font-sans`}>
+      {children}
+      <Toaster position="bottom-center" richColors />
+    </body>
+  );
+
+  if (!clerkReady) return body;
+
   return (
-    <html lang="en" className={`${cormorant.variable} ${dmSans.variable}`}>
-      <body className="font-sans">
-        {children}
-        <Toaster position="bottom-center" richColors />
-      </body>
-    </html>
+    <ClerkProvider appearance={{ theme: shadcn }}>{body}</ClerkProvider>
   );
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getAnnouncementSettings, getBrandSettings } from "@/lib/dal/settings";
 import { getNavCategories } from "@/lib/dal/catalog";
 import { CategoryBar, HeaderIcons, MobileMenu } from "./header-nav";
+import { clerkConfigured } from "@/lib/auth/current-customer";
 
 export async function SiteHeader() {
   const [brand, categories, announcement] = await Promise.all([
@@ -37,7 +38,7 @@ export async function SiteHeader() {
           </Link>
 
           {/* Right: icons */}
-          <HeaderIcons />
+          <HeaderIcons clerkConfigured={clerkConfigured()} />
         </div>
       </div>
       <div className="border-t border-border/60">

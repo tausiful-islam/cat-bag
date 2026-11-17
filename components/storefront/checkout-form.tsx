@@ -24,14 +24,26 @@ export interface Zone {
   charge: number;
 }
 
-export function CheckoutForm({ zones }: { zones: Zone[] }) {
+export interface CheckoutDefaults {
+  name: string;
+  phone: string;
+  address: import("@/lib/types").CustomerAddressRow | null;
+}
+
+export function CheckoutForm({
+  zones,
+  defaults,
+}: {
+  zones: Zone[];
+  defaults?: CheckoutDefaults;
+}) {
   const bag = useBag();
   const [state, formAction, pending] = useActionState<CheckoutState, FormData>(submitOrderAction, {});
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [district, setDistrict] = useState("");
-  const [area, setArea] = useState("");
+  const [name, setName] = useState(defaults?.name ?? "");
+  const [phone, setPhone] = useState(defaults?.phone ?? "");
+  const [address, setAddress] = useState(defaults?.address?.address_line ?? "");
+  const [district, setDistrict] = useState(defaults?.address?.district ?? "");
+  const [area, setArea] = useState(defaults?.address?.area ?? "");
   const [instructions, setInstructions] = useState("");
 
   const charge = useMemo(

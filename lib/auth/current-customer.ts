@@ -1,15 +1,11 @@
 import "server-only";
+import { auth, currentUser } from "@clerk/nextjs/server";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 /**
- * Customer authentication boundary.
- *
- * STATUS: integration-ready placeholder. Clerk credentials have not
- * been supplied yet — this module is the SINGLE place that will wire
- * them in (see docs/CLERK-INTEGRATION.md). Nothing else in the
- * codebase may decide "who is the customer".
- *
- * Until Clerk is configured, `getCurrentCustomer()` returns null and
- * order submission is gated by ORDERS_REQUIRE_AUTH=true.
+ * Customer authentication boundary — Clerk is now live.
+ * This module is the SINGLE place that decides "who is the customer".
+ * Roles/admin data never come from here.
  */
 
 export interface CurrentCustomer {
@@ -28,15 +24,41 @@ export function clerkConfigured(): boolean {
 }
 
 export async function getCurrentCustomer(): Promise<CurrentCustomer | null> {
-  // TODO(CLERK): const { userId } = await auth();
-  // if (!userId) return null;
-  // Map Clerk user -> customers row via customers.clerk_user_id and
-  // return the row. See docs/CLERK-INTEGRATION.md.
-  return null;
+  if (!clerkConfigured()) return null;
+  const { userId } = await auth();
+  if (!userId) return null;
+
+  const user = await currentUser();
+  const email = user?.primaryEmailAddress?.emailAddress ?? null;
+  const phone = user?.primaryPhoneNumber?.phoneNumber ?? null;
+  const fullName = user?.fullName ?? null;
+
+  // Sync profile fields into our customers table (keyed by clerk id).
+  // Upsert keeps name/email/phone fresh on each signed-in request.
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("customers")
+    .upsert(
+      { clerk_user_id: userId, full_name: fullName, email, phone },
+      { onConflict: "clerk_user_id" },
+    )
+    .select()
+    .single();
+
+  if (error || !data) {
+    console.error("customer_sync_failed", error?.message);
+    return null;
+  }
+  return {
+    id: data.id,
+    clerkUserId: userId,
+    fullName: data.full_name,
+    phone: data.phone,
+    email: data.email,
+  };
 }
 
 export async function ordersRequireAuth(): Promise<boolean> {
-  // Once Clerk is live this is always true in production.
   const flag = process.env.ORDERS_REQUIRE_AUTH;
   return flag !== undefined ? flag === "true" : true;
 }
