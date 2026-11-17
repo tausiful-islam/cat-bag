@@ -23,6 +23,7 @@ export default async function AdminLoginPage() {
             {brand.name}
           </span>
           <p className="eyebrow mt-2">Store Management</p>
+          <h1 className="sr-only">Admin Sign In</h1>
         </div>
         <div className="mt-8 border border-border bg-background p-8">
           <AdminLoginForm />
